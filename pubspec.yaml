@@ -1,0 +1,35 @@
+name: flutter_blue_example
+description: Demonstrates how to use the flutter_blue plugin.
+publish_to: "none"
+
+environment:
+  sdk: '>=2.12.0 <3.0.0'
+
+dependencies:
+  animate_do: ^2.1.0
+  awesome_snackbar_content: ^0.0.8
+  crc: ^0.0.2
+  crc32_checksum: ^0.0.2
+  crclib: ^3.0.0
+  curved_navigation_bar: ^1.0.3
+  fade_shimmer: ^2.0.1
+  dio: ^3.0.1
+  path_provider: ^1.6.10
+  permission_handler: ^5.0.1+1
+
+  flutter:
+    sdk: flutter
+  lottie: ^1.4.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_blue:
+    path: ../
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/
+
