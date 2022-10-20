@@ -1,17 +1,15 @@
 import 'dart:async';
-
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'package:flutter_blue_example/widgets.dart';
 import 'package:lottie/lottie.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/services.dart';
-import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:rxdart/rxdart.dart';
 
 void main() {
   runApp(FlutterBlueApp());
@@ -161,7 +159,9 @@ class FindDevicesScreen extends StatelessWidget {
                           result: r,
                           onTap: () => Navigator.of(context)
                               .push(MaterialPageRoute(builder: (context) {
-                            r.device.connect();
+                            r.device.connect(
+                                autoConnect: true,
+                                timeout: const Duration(seconds: 10));
                             return DeviceScreen(device: r.device);
                           })),
                         ),
@@ -200,7 +200,7 @@ class DeviceScreen extends StatelessWidget {
 
   final BluetoothDevice device;
 
-  List<int> _getRandomBytes() {
+  List getRandomBytes() {
     final listbytes = [
       0xDC,
       0x2E,
@@ -214,24 +214,23 @@ class DeviceScreen extends StatelessWidget {
       0x39,
       0x31,
       0xF9,
-      0x0F,
+      0x0F, //
       0x31,
       0x5D,
       0xFD,
       0xE4,
       0x19,
-      0xB4,
+      0xB4
     ];
     List list3 = [];
-    for (int i = 0; i < 19; i++) {
-      // list3 = (list3[i] ^ list3[i + 1]).toRadixString(16);
-      List list4 = [(listbytes[i] ^ listbytes[i + 1])];
-      list3 = List.from(list4);
-      print(list3);
-      //  print('list3: $list3');
-    }
-
-    return listbytes;
+    // list3 = (list3[i] ^ list3[i + 1]).toRadixString(16);
+    List list4 = [
+      (listbytes[listbytes.length - 2] ^ listbytes[listbytes.length - 1])
+          .toRadixString(16)
+    ];
+    list3 = List.from(list4);
+    print(list3);
+    return list3;
   }
 
   Future<List> startLoad() async {
@@ -260,25 +259,25 @@ class DeviceScreen extends StatelessWidget {
   }
 
   Future<List> localPath() async {
-    const textasset = "assets/bytes of led hercules (1).txt";
-    final text = await rootBundle.loadString(textasset);
+    var externalDirectoryPath = await getExternalStorageDirectory();
+
+    final Directory directory = await getExternalStorageDirectory();
+    File textasset = File('/storage/emulated/0/RPSApp/assets/bluetooth.txt');
+    final text = await textasset.readAsString();
     final bytes =
         text.split(',').map((s) => s.trim()).map((s) => int.parse(s)).toList();
 
     final chunks = [];
+    //final list4 = [];
     int chunkSize = 19;
-    for (int i = 0; i < bytes.length; i += chunkSize) {
-      //  await Future.delayed(Duration(seconds: 1));
 
+    for (int i = 0; i < bytes.length; i += chunkSize) {
       chunks.add(bytes.sublist(
           i, i + chunkSize > bytes.length ? bytes.length : i + chunkSize));
     }
 
     return chunks;
   }
-
-  bool loading = false;
-  double progress = 0;
 
   int buttonCount = 0;
   List<Widget> _buildServiceTiles(List<BluetoothService> services) {
@@ -290,40 +289,115 @@ class DeviceScreen extends StatelessWidget {
                 .map(
                   (c) => CharacteristicTile(
                     characteristic: c,
+
                     onReadPressed: () async =>
                         Future.delayed(Duration(milliseconds: 500), () async {
                       await c.read();
                     }),
+
                     onWritePressed: () async {
-                      buttonCount += 1;
-
-                      final bytes = await startLoad();
                       final chunks = await localPath();
-                      final nb = await nbrPaquets();
+                      final ch = await startLoad();
+                      /*for (int i = 0; i < 1; i++) {
+                        c.write(chunks as List<int>, withoutResponse: true);
+                      }*/
 
+                      //for (int i = 1; i < chunks.length; i++) {
+                      /* for (List<int> chunk in chunks) {
+                        for (int i = 0; i < 1; i++) {
+                          c.write(chunk, withoutResponse: true);
+                          c.read();
+                        }
+                      }*/
+                      buttonCount += 1;
+                      BluetoothCharacteristic notif = BluetoothCharacteristic(
+                        uuid: new Guid("0000fe42-8e22-4541-9d4c-21edae82ed19"),
+                        deviceId: DeviceIdentifier("00:80:E1:26:67:67"),
+                        serviceUuid:
+                            new Guid("0000fe40-cc7a-482a-984a-7f2ed5b3e58f"),
+                        secondaryServiceUuid: null,
+                        properties: CharacteristicProperties(
+                            broadcast: false,
+                            read: false,
+                            writeWithoutResponse: false,
+                            write: false,
+                            notify: true,
+                            indicate: false,
+                            authenticatedSignedWrites: false,
+                            extendedProperties: false,
+                            notifyEncryptionRequired: false,
+                            indicateEncryptionRequired: false),
+                        descriptors: [
+                          BluetoothDescriptor(
+                              uuid: new Guid(
+                                  "00002902-0000-1000-8000-00805f9b34fb"),
+                              deviceId: DeviceIdentifier("00:80:E1:26:67:67"),
+                              serviceUuid: new Guid(
+                                  "0000fe40-cc7a-482a-984a-7f2ed5b3e58f"),
+                              characteristicUuid: new Guid(
+                                  "0000fe42-8e22-4541-9d4c-21edae82ed19"),
+                              value: BehaviorSubject<List<int>>.seeded([1, 0])),
+                        ],
+                        value: BehaviorSubject<List<int>>.seeded([]),
+                      );
                       if (buttonCount == 1) {
-                        for (List<int> listbytes in bytes) {
+                        for (List<int> listbytes in ch) {
                           c.write(listbytes, withoutResponse: true);
                           c.read();
+                          print('listbytes : $listbytes');
                         }
-                      } else if (buttonCount == 2) {
-                        for (List<int> paquets in nb) {
-                          c.write(paquets, withoutResponse: true);
-                          c.read();
-                        }
-                      } else {
+                      } else if (notif.isNotifying) {
                         await Future.forEach(chunks, (chunk) async {
-                          c.write(chunk as List<int>, withoutResponse: true);
-                          c.read();
-                          await Future.delayed(const Duration(seconds: 4));
+                          final d = chunk as List<int>;
+                          var sum = 0;
+
+                          int i = 0;
+                          while (i < d.length) {
+                            sum = (sum ^ d[i]);
+                            i++;
+                          }
+                          d.insert(19, sum);
+                          while (i < 1) {
+                            i++;
+                            c.write(d, withoutResponse: true);
+                            c.read();
+                          }
+                          print('NOTIF : $notif');
+                          print(notif.isNotifying);
+                          if ((notif.isNotifying)) {
+                            c.write(d, withoutResponse: true);
+                            c.read();
+                            await Future.delayed(const Duration(seconds: 4));
+                          }
                         });
                       }
                     },
+
+                    /*if (notif==255) then send data*/
+                    //   for (int i = 0; i < 1; i++) {
+                    //     c.write(chunk as List<int>, withoutResponse: true);
+                    // }
+                    //await c.setNotifyValue
+                    //
+                    //(!c.isNotifying);
+                    //c.read();
+
+                    //if (c.isNotifying) {
+
+                    //});
+                    //   final bytes = getRandomBytes();
+
+                    /*  for (List<int> listbytes in bytes) {
+                        c.write(listbytes, withoutResponse: true);
+                        print(listbytes);
+                      }*/
+
                     onSendPressed: () async {
-                      final bytes = await startLoad();
+                      final bytes = getRandomBytes();
 
                       for (List<int> listbytes in bytes) {
                         c.write(listbytes, withoutResponse: true);
+                        print('listbytes : $listbytes');
                       }
                     },
                     onSendPaquets: () async {
@@ -333,9 +407,11 @@ class DeviceScreen extends StatelessWidget {
                         c.write(chunk, withoutResponse: true);
                       }
                     },
+                    //this for enabling notification
                     onNotificationPressed: () async {
                       await c.setNotifyValue(!c.isNotifying);
                       Future.delayed(Duration(milliseconds: 500), () async {
+                        //this is for reading the value of the notification
                         await c.read();
                       });
                     },
@@ -344,7 +420,7 @@ class DeviceScreen extends StatelessWidget {
                           (d) => DescriptorTile(
                             descriptor: d,
                             onReadPressed: () => d.read(),
-                            onWritePressed: () => d.write(_getRandomBytes()),
+                            //  onWritePressed: () => d.write(_getRandomBytes()),
                           ),
                         )
                         .toList(),

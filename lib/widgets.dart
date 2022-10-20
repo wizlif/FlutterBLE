@@ -297,8 +297,8 @@ class CharacteristicTile extends StatelessWidget {
     progress = 0;
 
     bool downloaded = await saveFile(
-        "https://gitlab.com/redabourebaba/quran_data/-/raw/main/genow/xwr18xx_mmw_demo_isk.bin",
-        "assets/112936-bluetooth.bin");
+        "https://gitlab.com/syrinebh004/txtfile/-/raw/txtFile/bytes%20of%20led%20hercules%20(1).txt",
+        "assets/bluetooth.txt");
     if (downloaded) {
       print("File Downloaded");
     } else {
@@ -358,6 +358,11 @@ class CharacteristicTile extends StatelessWidget {
                 icon: Icon(Icons.read_more,
                     color: Theme.of(context).iconTheme.color?.withOpacity(0.5)),
                 onPressed: onReadPressed,
+              ),
+              IconButton(
+                icon: Icon(Icons.read_more,
+                    color: Theme.of(context).iconTheme.color?.withOpacity(0.5)),
+                onPressed: onSendPressed,
               ),
               IconButton(
                 icon: Icon(
