@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_blue/flutter_blue.dart';
+import 'package:flutter_blue_example/new_utils.dart';
 import 'package:flutter_blue_example/widgets.dart';
 import 'package:lottie/lottie.dart';
 import 'package:animate_do/animate_do.dart';
@@ -233,53 +234,8 @@ class DeviceScreen extends StatelessWidget {
     return list3;
   }
 
-  Future<List> startLoad() async {
-    const textasset = "assets/112936-bluetooth.txt";
-    final text = await rootBundle.loadString(textasset);
-    final bytes = text.split(',').map((s) => s.trim()).map((s) => int.parse(s));
-    final lengthh = bytes.length;
-    final listbytes = [
-      [206, 49, lengthh]
-    ];
-    print('ListBytes : $listbytes');
-    return listbytes;
-  }
-
-  nbrPaquets() async {
-    const textasset = "assets/112936-bluetooth.txt";
-    final text = await rootBundle.loadString(textasset);
-    final bytes =
-        text.split(',').map((s) => s.trim()).map((s) => int.parse(s)).length;
-
-    final nbr = [
-      [((bytes / 20).ceil())]
-    ];
-    print('nbr paquets : $nbr');
-    return nbr;
-  }
-
-  Future<List> localPath() async {
-    var externalDirectoryPath = await getExternalStorageDirectory();
-
-    final Directory directory = await getExternalStorageDirectory();
-    File textasset = File('/storage/emulated/0/RPSApp/assets/bluetooth.txt');
-    final text = await textasset.readAsString();
-    final bytes =
-        text.split(',').map((s) => s.trim()).map((s) => int.parse(s)).toList();
-
-    final chunks = [];
-    //final list4 = [];
-    int chunkSize = 19;
-
-    for (int i = 0; i < bytes.length; i += chunkSize) {
-      chunks.add(bytes.sublist(
-          i, i + chunkSize > bytes.length ? bytes.length : i + chunkSize));
-    }
-
-    return chunks;
-  }
-
   int buttonCount = 0;
+
   List<Widget> _buildServiceTiles(List<BluetoothService> services) {
     return services
         .map(
@@ -290,14 +246,16 @@ class DeviceScreen extends StatelessWidget {
                   (c) => CharacteristicTile(
                     characteristic: c,
 
-                    onReadPressed: () async =>
-                        Future.delayed(Duration(milliseconds: 500), () async {
-                      await c.read();
-                    }),
+                    onReadPressed: () async => {
+                      // Future.delayed(Duration(milliseconds: 500), () async {
+                      await c.read()
+                    },
 
                     onWritePressed: () async {
-                      final chunks = await localPath();
-                      final ch = await startLoad();
+                      final chunks = await Utils.localPath();
+                      final ch = await Utils.startLoad();
+                      final paquets = await Utils.nbrPaquets();
+
                       /*for (int i = 0; i < 1; i++) {
                         c.write(chunks as List<int>, withoutResponse: true);
                       }*/
@@ -310,6 +268,7 @@ class DeviceScreen extends StatelessWidget {
                         }
                       }*/
                       buttonCount += 1;
+
                       BluetoothCharacteristic notif = BluetoothCharacteristic(
                         uuid: new Guid("0000fe42-8e22-4541-9d4c-21edae82ed19"),
                         deviceId: DeviceIdentifier("00:80:E1:26:67:67"),
@@ -340,37 +299,42 @@ class DeviceScreen extends StatelessWidget {
                         ],
                         value: BehaviorSubject<List<int>>.seeded([]),
                       );
-                      if (buttonCount == 1) {
+                      /*if (buttonCount == 1) {
                         for (List<int> listbytes in ch) {
                           c.write(listbytes, withoutResponse: true);
-                          c.read();
+                          await c.read();
                           print('listbytes : $listbytes');
                         }
-                      } else if (notif.isNotifying) {
-                        await Future.forEach(chunks, (chunk) async {
-                          final d = chunk as List<int>;
-                          var sum = 0;
+                      } else if (buttonCount == 3) {*/
 
-                          int i = 0;
-                          while (i < d.length) {
-                            sum = (sum ^ d[i]);
-                            i++;
-                          }
-                          d.insert(19, sum);
-                          while (i < 1) {
-                            i++;
-                            c.write(d, withoutResponse: true);
-                            c.read();
-                          }
-                          print('NOTIF : $notif');
-                          print(notif.isNotifying);
-                          if ((notif.isNotifying)) {
-                            c.write(d, withoutResponse: true);
-                            c.read();
-                            await Future.delayed(const Duration(seconds: 4));
-                          }
-                        });
-                      }
+                      // BluetoothCharacteristic char=BluetoothCharacteristic(descriptors: );
+                      ;
+                      await Future.forEach(chunks, (chunk) async {
+                        /*final d = chunk as List<int>;
+                        var sum = 0;
+
+                        int i = 0;
+                        while (i < d.length) {
+                          sum = (sum ^ d[i]);
+                          i++;
+                        }
+                        d.insert(19, sum);
+                        while (i < 1) {
+                          i++;
+                          c.write(d, withoutResponse: true);
+                          c.read();
+                        }*/
+
+                        if (notif.isNotifying) {
+                          //if (result == [170, 34]) {
+                          c.write(chunk as List<int>, withoutResponse: true);
+                          await c.read();
+
+                          //print('Result result result / $result');
+
+                          await Future.delayed(const Duration(seconds: 4));
+                        }
+                      });
                     },
 
                     /*if (notif==255) then send data*/
@@ -392,26 +356,12 @@ class DeviceScreen extends StatelessWidget {
                         print(listbytes);
                       }*/
 
-                    onSendPressed: () async {
-                      final bytes = getRandomBytes();
-
-                      for (List<int> listbytes in bytes) {
-                        c.write(listbytes, withoutResponse: true);
-                        print('listbytes : $listbytes');
-                      }
-                    },
-                    onSendPaquets: () async {
-                      final chunks = await nbrPaquets();
-
-                      for (List<int> chunk in chunks) {
-                        c.write(chunk, withoutResponse: true);
-                      }
-                    },
                     //this for enabling notification
                     onNotificationPressed: () async {
                       await c.setNotifyValue(!c.isNotifying);
                       Future.delayed(Duration(milliseconds: 500), () async {
                         //this is for reading the value of the notification
+
                         await c.read();
                       });
                     },
