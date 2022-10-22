@@ -100,7 +100,7 @@ class ScanResultTile extends StatelessWidget {
       title: _buildTitle(context),
       leading: Text(result.rssi.toString()),
       trailing: TextButton(
-        child: Text('CONNECT'),
+        Widget: Text('CONNECT'),
         onPressed: (result.advertisementData.connectable) ? onTap : null,
       ),
       children: <Widget>[

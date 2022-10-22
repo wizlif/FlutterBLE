@@ -1,16 +1,14 @@
+import 'dart:developer';
 import 'dart:io';
-
-import 'package:flutter/services.dart';
 
 class Utils {
   static Future<List> localPath() async {
-    File textasset = File('/storage/emulated/0/RPSApp/assets/bluetooth.txt');
-    final text = await textasset.readAsString();
+    File textAsset = File('/storage/emulated/0/RPSApp/assets/bluetooth.txt');
+    final text = await textAsset.readAsString();
     final bytes =
         text.split(',').map((s) => s.trim()).map((s) => int.parse(s)).toList();
 
     final chunks = [];
-    //final list4 = [];
     int chunkSize = 19;
 
     for (int i = 0; i < 40; i += chunkSize) {
@@ -22,26 +20,26 @@ class Utils {
   }
 
   static Future<List> startLoad() async {
-    const textasset = "assets/112936-bluetooth.txt";
-    final text = await rootBundle.loadString(textasset);
-    final bytes = text.split(',').map((s) => s.trim()).map((s) => int.parse(s));
-    final listbytes = [
+    // const textAsset = "assets/112936-bluetooth.txt";
+    // final text = await rootBundle.loadString(textAsset);
+    // final bytes = text.split(',').map((s) => s.trim()).map((s) => int.parse(s));
+    final listBytes = [
       [206, 49]
     ];
-    print('ListBytes : $listbytes');
-    return listbytes;
+    log('ListBytes : $listBytes');
+    return listBytes;
   }
 
   static Future<List<List<String>>> nbrPaquets() async {
-    File textasset = File('/storage/emulated/0/RPSApp/assets/bluetooth.txt');
-    final text = await textasset.readAsString();
+    File textAsset = File('/storage/emulated/0/RPSApp/assets/bluetooth.txt');
+    final text = await textAsset.readAsString();
     final bytes =
         text.split(',').map((s) => s.trim()).map((s) => int.parse(s)).length;
 
     final nbr = [
       [((bytes / 20).ceil().toRadixString(16))]
     ];
-    print('nbr paquets : $nbr');
+    log('nbr paquets : $nbr');
     return nbr;
   }
 }
