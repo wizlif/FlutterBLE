@@ -28,7 +28,7 @@ class BluetoothToggleButton extends StatelessWidget {
         }
         return TextButton(
           onPressed: onPressed,
-          Widget: Text(
+          child: Text(
             text,
             style: Theme.of(context)
                 .primaryTextTheme
