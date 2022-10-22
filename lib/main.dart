@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 
@@ -22,7 +24,11 @@ class FlutterBlueApp extends StatelessWidget {
           initialData: BluetoothState.unknown,
           builder: (c, snapshot) {
             final state = snapshot.data;
+            // log(state.toString());
             if (state == BluetoothState.on) {
+              FlutterBlue.instance.startScan(
+                timeout: const Duration(seconds: 4),
+              );
               return const FindDevicesScreen();
             }
             return const BluetoothOffScreen();
@@ -30,6 +36,3 @@ class FlutterBlueApp extends StatelessWidget {
     );
   }
 }
-
-
-

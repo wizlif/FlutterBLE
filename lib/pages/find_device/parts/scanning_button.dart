@@ -9,7 +9,9 @@ class ScanningButton extends StatelessWidget {
       stream: FlutterBlue.instance.isScanning,
       initialData: false,
       builder: (c, snapshot) {
-        if (snapshot.data != null) {
+        final isScanning = snapshot.data ?? false;
+        // log(isScanning.toString());
+        if (isScanning) {
           return FloatingActionButton(
             onPressed: () => FlutterBlue.instance.stopScan(),
             backgroundColor: Colors.red,
