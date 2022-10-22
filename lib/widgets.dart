@@ -244,13 +244,14 @@ class CharacteristicTile extends StatelessWidget {
   }
 
   Future<bool> saveFile(String url, String fileName) async {
-    Directory directory;
+    Directory? directory;
     try {
       if (Platform.isAndroid) {
         if (await _requestPermission(Permission.storage)) {
           directory = await getExternalStorageDirectory();
           String newPath = "";
           print(directory);
+          if (directory == null) return false;
           List<String> paths = directory.path.split("/");
           for (int x = 1; x < paths.length; x++) {
             String folder = paths[x];
