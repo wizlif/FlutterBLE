@@ -32,6 +32,15 @@ class BluetoothServiceList extends StatelessWidget {
                 log("SERVICE_UUID: ${c.serviceUuid.toByteArray()}");
                 log("CHARACTERISTIC UUID: ${c.uuid.toByteArray()}");
                 log("NOTIFYING: ${c.isNotifying}");
+
+                // final isNotifyingXtic42 =
+                //     c.isNotifying && c.uuid.toByteArray() == [170, 34];
+
+                final isNotifyingXtic42 =
+                    c.isNotifying && c.uuid.toString() == characteristic42Uuid;
+
+                log("NOTIFYING CHARACTERISTIC 42: $isNotifyingXtic42");
+                
                 return CharacteristicTile(
                   characteristic: c,
                   onReadPressed: () async => {
@@ -76,3 +85,5 @@ class BluetoothServiceList extends StatelessWidget {
     });
   }
 }
+
+const characteristic42Uuid = "0000fe42-8e22-4541-9d4c-21edae82ed19";
