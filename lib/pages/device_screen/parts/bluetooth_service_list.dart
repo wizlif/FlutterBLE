@@ -11,8 +11,10 @@ class BluetoothServiceList extends StatelessWidget {
       stream: device.services,
       initialData: const [],
       builder: (c, snapshot) {
+        final services = snapshot.data ?? [];
+
         return Column(
-          children: _buildServiceTiles(snapshot.data!),
+          children: _buildServiceTiles(services),
         );
       },
     );
@@ -23,36 +25,40 @@ class BluetoothServiceList extends StatelessWidget {
         .map(
           (s) => ServiceTile(
             service: s,
-            characteristicTiles: s.characteristics
-                .map(
-                  (c) => CharacteristicTile(
-                    characteristic: c,
-                    onReadPressed: () async => {
-                      // Future.delayed(Duration(milliseconds: 500), () async {
-                      await c.read()
-                    },
-                    onWritePressed: () => _onWritePressed(c),
-                    //this for enabling notification
-                    onNotificationPressed: () async {
-                      await c.setNotifyValue(!c.isNotifying);
-                      Future.delayed(const Duration(milliseconds: 500),
-                          () async {
-                        //this is for reading the value of the notification
+            characteristicTiles: s.characteristics.map(
+              (c) {
+                log("#### CHARACTERISTIC #####");
+                log("DEVICE_ID: ${c.deviceId.id}");
+                log("SERVICE_UUID: ${c.serviceUuid.toByteArray()}");
+                log("CHARACTERISTIC UUID: ${c.uuid.toByteArray()}");
+                log("NOTIFYING: ${c.isNotifying}");
+                return CharacteristicTile(
+                  characteristic: c,
+                  onReadPressed: () async => {
+                    // Future.delayed(Duration(milliseconds: 500), () async {
+                    await c.read()
+                  },
+                  onWritePressed: () => _onWritePressed(c),
+                  //this for enabling notification
+                  onNotificationPressed: () async {
+                    await c.setNotifyValue(!c.isNotifying);
+                    Future.delayed(const Duration(milliseconds: 500), () async {
+                      //this is for reading the value of the notification
 
-                        await c.read();
-                      });
-                    },
-                    descriptorTiles: c.descriptors
-                        .map(
-                          (d) => DescriptorTile(
-                            descriptor: d,
-                            onReadPressed: () => d.read(),
-                          ),
-                        )
-                        .toList(),
-                  ),
-                )
-                .toList(),
+                      await c.read();
+                    });
+                  },
+                  descriptorTiles: c.descriptors
+                      .map(
+                        (d) => DescriptorTile(
+                          descriptor: d,
+                          onReadPressed: () => d.read(),
+                        ),
+                      )
+                      .toList(),
+                );
+              },
+            ).toList(),
           ),
         )
         .toList();
@@ -60,7 +66,7 @@ class BluetoothServiceList extends StatelessWidget {
 
   Future<void> _onWritePressed(BluetoothCharacteristic c) async {
     final chunks = await Utils.localPath();
-   
+
     await Future.forEach(chunks, (chunk) async {
       if (c.isNotifying) {
         c.write(chunk as List<int>, withoutResponse: true);
