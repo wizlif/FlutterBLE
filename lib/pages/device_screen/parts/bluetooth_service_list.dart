@@ -33,14 +33,6 @@ class BluetoothServiceList extends StatelessWidget {
                 log("CHARACTERISTIC UUID: ${c.uuid.toByteArray()}");
                 log("NOTIFYING: ${c.isNotifying}");
 
-                // final isNotifyingXtic42 =
-                //     c.isNotifying && c.uuid.toByteArray() == [170, 34];
-
-                final isNotifyingXtic42 =
-                    c.isNotifying && c.uuid.toString() == characteristic42Uuid;
-
-                log("NOTIFYING CHARACTERISTIC 42: $isNotifyingXtic42");
-                
                 return CharacteristicTile(
                   characteristic: c,
                   onReadPressed: () async => {
@@ -74,16 +66,25 @@ class BluetoothServiceList extends StatelessWidget {
   }
 
   Future<void> _onWritePressed(BluetoothCharacteristic c) async {
-    final chunks = await Utils.localPath();
+    final isNotifyingXtic42 = c.isNotifyingCharacteristic42;
 
-    await Future.forEach(chunks, (chunk) async {
-      if (c.isNotifying) {
+    log("NOTIFYING CHARACTERISTIC 42: $isNotifyingXtic42");
+
+    if (isNotifyingXtic42) {
+      final chunks = await Utils.localPath();
+
+      await Future.forEach(chunks, (chunk) async {
         c.write(chunk as List<int>, withoutResponse: true);
         await c.read();
         await Future.delayed(const Duration(seconds: 4));
-      }
-    });
+      });
+    }
   }
+}
+
+extension CharacteristicX on BluetoothCharacteristic {
+  bool get isNotifyingCharacteristic42 =>
+      isNotifying && uuid.toString() == characteristic42Uuid;
 }
 
 const characteristic42Uuid = "0000fe42-8e22-4541-9d4c-21edae82ed19";
